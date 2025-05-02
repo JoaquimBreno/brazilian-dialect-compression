@@ -4,6 +4,9 @@ import lzma
 import zlib
 import numpy as np
 from collections import Counter
+import pandas as pd
+
+from ppm.main import main
 
 def load_text(filepath):
     """Load text from a file."""
@@ -183,14 +186,22 @@ def bwt_inverse(bwt, index):
     # Return the original text (removing the sentinel character)
     return table[index][:-1]
 
-def run_compression_analysis(filepath):
+def run_compression_analysis(filepath, i):
     """Run comprehensive compression analysis on a file."""
     print(f"Analyzing file: {filepath}")
-    
+    Textos = []
+    Textos.append("train_batch_" + str(i) + ".txt")
+
     # Load text
     text = load_text(filepath)
     print(f"Text length: {len(text)} characters")
     
+    # Run PPM compression
+    print("\nPPM compression:")
+    ppm_entropy, ppm_avg_seq_length = main(filepath)
+    print(f"PPM entropy estimate: {ppm_entropy:.4f} bits per symbol")
+    print(f"PPM avg sequence length: {ppm_avg_seq_length:.4f} bytes")
+
     # Calculate basic text statistics
     entropy = calculate_entropy(text)
     avg_length = calculate_avg_length(text)
@@ -230,7 +241,7 @@ def run_compression_analysis(filepath):
     print(f"Space saving: {(1 - zlib_ratio) * 100:.2f}%")
     print(f"LZ77 entropy estimate: {lz77_entropy:.4f} bits per symbol")
     print(f"LZ77 avg sequence length: {lz77_avg_seq_length:.4f} bytes")
-    
+    '''
     # BWT and compression
     print("\nBurrows-Wheeler Transform (BWT):")
     try:
@@ -287,7 +298,8 @@ def run_compression_analysis(filepath):
         print(f"BWT+LZ77 avg sequence length: {bwt_lz77_avg_seq_length:.4f} bytes")
     except Exception as e:
         print(f"BWT analysis failed: {e}")
-    
+    '''
+
     print("\nCompression Summary:")
     print(f"Original size: {len(text.encode('utf-8'))} bytes")
     print(f"Original entropy: {entropy:.4f} bits per symbol")
@@ -297,17 +309,104 @@ def run_compression_analysis(filepath):
     print(f"LZ77: {len(zlib_compressed)} bytes ({(1 - zlib_ratio) * 100:.2f}% saving)")
     print(f"LZ77 entropy estimate: {lz77_entropy:.4f} bits per symbol")
     print(f"LZ77 avg sequence length: {lz77_avg_seq_length:.4f} bytes")
-    
+    '''
     if 'bwt_entropy' in locals():
         print(f"BWT entropy: {bwt_entropy:.4f} bits per symbol")
         print(f"BWT+LZMA entropy estimate: {bwt_lzma_entropy:.4f} bits per symbol")
         print(f"BWT+LZMA avg sequence length: {bwt_lzma_avg_seq_length:.4f} bytes")
         print(f"BWT+LZ77 entropy estimate: {bwt_lz77_entropy:.4f} bits per symbol")
         print(f"BWT+LZ77 avg sequence length: {bwt_lz77_avg_seq_length:.4f} bytes")
+    '''
+
+    return {
+        "ppm_entropy": ppm_entropy,
+        "ppm_avg_length": ppm_avg_seq_length,
+        "lzma_entropy": lzma_entropy,
+        "lzma_avg_seq_length": lzma_avg_seq_length,
+        "lz77_entropy": lz77_entropy,
+        "lz77_avg_seq_length": lz77_avg_seq_length
+    }
 
 if __name__ == "__main__":
     # Set the filepath to the text file
-    filepath = "splits/train/train_batch_1.txt"
-    
     # Run the analysis
-    run_compression_analysis(filepath) 
+    
+    for i in range(1, 5):
+        if i == 1:
+            regiao = "nordeste"
+        if i == 2:
+            regiao = "norte"
+        if i == 3:
+            regiao = "sul"
+        if i == 4:
+            regiao = "sudeste"
+        
+        print(f"Running analysis for {regiao} region")
+
+        txts = []
+        ppm_entropy = []
+        ppm_avg_length = []
+        lzma_entropy = []
+        lzma_avg_length = []
+        lz77_entropy = []
+        lz77_avg_length = []
+
+        for i in range(1, 4):
+            filepath = "db/"+regiao+"/splits/train/train_batch_"+  str(i) + ".txt"
+            results = run_compression_analysis(filepath, i)
+            txts.append("train_batch_" + str(i) + ".txt")
+            ppm_entropy.append(results["ppm_entropy"])
+            ppm_avg_length.append(results["ppm_avg_length"])
+            lzma_entropy.append(results["lzma_entropy"])
+            lzma_avg_length.append(results["lzma_avg_seq_length"])
+            lz77_entropy.append(results["lz77_entropy"])
+            lz77_avg_length.append(results["lz77_avg_seq_length"])
+        # Save results to a CSV file
+        df = pd.DataFrame({
+            "Text": txts,
+            "PPM Entropy": ppm_entropy,
+        })
+        df.to_csv("results/"+regiao+"/ppm_entropy.csv", index=False)
+        df = pd.DataFrame({
+            "Text": txts,
+            "PPM Avg Length": ppm_avg_length,
+        })
+        df.to_csv("results/"+regiao+"/ppm_avg_length.csv", index=False)
+        df = pd.DataFrame({
+            "Text": txts,
+            "LZMA Entropy": lzma_entropy,
+        })
+        df.to_csv("results/"+regiao+"/lzma_entropy.csv", index=False)
+        df = pd.DataFrame({
+            "Text": txts,
+            "LZMA Avg Length": lzma_avg_length,
+        })
+        df.to_csv("results/"+regiao+"/lzma_avg_length.csv", index=False)
+        df = pd.DataFrame({
+            "Text": txts,
+            "LZ77 Entropy": lz77_entropy,
+        })
+        df.to_csv("results/"+regiao+"/lz77_entropy.csv", index=False)
+        df = pd.DataFrame({
+            "Text": txts,
+            "LZ77 Avg Length": lz77_avg_length,
+        })
+        df.to_csv("results/"+regiao+"/lz77_avg_length.csv", index=False)
+        #.csv com as medias
+        ppm_entropy_mean = np.mean(ppm_entropy)
+        ppm_avg_length_mean = np.mean(ppm_avg_length)
+        lzma_entropy_mean = np.mean(lzma_entropy)
+        lzma_avg_length_mean = np.mean(lzma_avg_length)
+        lz77_entropy_mean = np.mean(lz77_entropy)
+        lz77_avg_length_mean = np.mean(lz77_avg_length)
+        df = pd.DataFrame({
+            "Text": ["mean_"+regiao],
+            "PPM Entropy": [ppm_entropy_mean],
+            "PPM Avg Length": [ppm_avg_length_mean],
+            "LZMA Entropy": [lzma_entropy_mean],
+            "LZMA Avg Length": [lzma_avg_length_mean],
+            "LZ77 Entropy": [lz77_entropy_mean],
+            "LZ77 Avg Length": [lz77_avg_length_mean]
+        })
+        df.to_csv("results/"+regiao+"/mean.csv", index=False)
+        print(f"Results saved to results/{regiao}/")
