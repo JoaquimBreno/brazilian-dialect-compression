@@ -361,8 +361,8 @@ if __name__ == "__main__":
         lz77_entropy = []
         lz77_avg_length = []
 
-        for i in range(1, 4):
-            filepath = f"db/{regiao}/splits/train/train_batch_{i}.txt"
+        for i in range(1, 45):
+            filepath = "db/"+regiao+"/splits/train/train_batch_"+  str(i) + ".txt"
             results = run_compression_analysis(filepath, i)
             txts.append(f"train_batch_{i}.txt")
             ppm_entropy.append(results["ppm_entropy"])
