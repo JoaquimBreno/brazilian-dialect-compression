@@ -303,6 +303,8 @@ def run_compression_analysis(filepath, i):
     print("\nCompression Summary:")
     print(f"Original size: {len(text.encode('utf-8'))} bytes")
     print(f"Original entropy: {entropy:.4f} bits per symbol")
+    print(f"PPM entropy estimate: {ppm_entropy:.4f} bits per symbol")
+    print(f"PPM avg sequence length: {ppm_avg_seq_length:.4f} bytes")
     print(f"LZMA: {len(lzma_compressed)} bytes ({(1 - lzma_ratio) * 100:.2f}% saving)")
     print(f"LZMA entropy estimate: {lzma_entropy:.4f} bits per symbol")
     print(f"LZMA avg sequence length: {lzma_avg_seq_length:.4f} bytes")
@@ -327,6 +329,11 @@ def run_compression_analysis(filepath, i):
         "lz77_avg_seq_length": lz77_avg_seq_length
     }
 
+def ensure_dir(directory):
+    """Make sure a directory exists, creating it if necessary"""
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
 if __name__ == "__main__":
     # Set the filepath to the text file
     # Run the analysis
@@ -343,6 +350,9 @@ if __name__ == "__main__":
         
         print(f"Running analysis for {regiao} region")
 
+        # Make sure results directory exists
+        ensure_dir(f"results/{regiao}")
+
         txts = []
         ppm_entropy = []
         ppm_avg_length = []
@@ -352,55 +362,63 @@ if __name__ == "__main__":
         lz77_avg_length = []
 
         for i in range(1, 4):
-            filepath = "db/"+regiao+"/splits/train/train_batch_"+  str(i) + ".txt"
+            filepath = f"db/{regiao}/splits/train/train_batch_{i}.txt"
             results = run_compression_analysis(filepath, i)
-            txts.append("train_batch_" + str(i) + ".txt")
+            txts.append(f"train_batch_{i}.txt")
             ppm_entropy.append(results["ppm_entropy"])
             ppm_avg_length.append(results["ppm_avg_length"])
             lzma_entropy.append(results["lzma_entropy"])
             lzma_avg_length.append(results["lzma_avg_seq_length"])
             lz77_entropy.append(results["lz77_entropy"])
             lz77_avg_length.append(results["lz77_avg_seq_length"])
-        # Save results to a CSV file
+        
+        # Save results to CSV files
         df = pd.DataFrame({
             "Text": txts,
             "PPM Entropy": ppm_entropy,
         })
-        df.to_csv("results/"+regiao+"/ppm_entropy.csv", index=False)
+        df.to_csv(f"results/{regiao}/ppm_entropy.csv", index=False)
+        
         df = pd.DataFrame({
             "Text": txts,
             "PPM Avg Length": ppm_avg_length,
         })
-        df.to_csv("results/"+regiao+"/ppm_avg_length.csv", index=False)
+        df.to_csv(f"results/{regiao}/ppm_avg_length.csv", index=False)
+        
         df = pd.DataFrame({
             "Text": txts,
             "LZMA Entropy": lzma_entropy,
         })
-        df.to_csv("results/"+regiao+"/lzma_entropy.csv", index=False)
+        df.to_csv(f"results/{regiao}/lzma_entropy.csv", index=False)
+        
         df = pd.DataFrame({
             "Text": txts,
             "LZMA Avg Length": lzma_avg_length,
         })
-        df.to_csv("results/"+regiao+"/lzma_avg_length.csv", index=False)
+        df.to_csv(f"results/{regiao}/lzma_avg_length.csv", index=False)
+        
         df = pd.DataFrame({
             "Text": txts,
             "LZ77 Entropy": lz77_entropy,
         })
-        df.to_csv("results/"+regiao+"/lz77_entropy.csv", index=False)
+        df.to_csv(f"results/{regiao}/lz77_entropy.csv", index=False)
+        
         df = pd.DataFrame({
             "Text": txts,
             "LZ77 Avg Length": lz77_avg_length,
         })
-        df.to_csv("results/"+regiao+"/lz77_avg_length.csv", index=False)
-        #.csv com as medias
+        df.to_csv(f"results/{regiao}/lz77_avg_length.csv", index=False)
+        
+        # Save CSV with averages for all three compression methods
         ppm_entropy_mean = np.mean(ppm_entropy)
         ppm_avg_length_mean = np.mean(ppm_avg_length)
         lzma_entropy_mean = np.mean(lzma_entropy)
         lzma_avg_length_mean = np.mean(lzma_avg_length)
         lz77_entropy_mean = np.mean(lz77_entropy)
         lz77_avg_length_mean = np.mean(lz77_avg_length)
+        
         df = pd.DataFrame({
-            "Text": ["mean_"+regiao],
+            "Text": [f"mean_{regiao}"],
             "PPM Entropy": [ppm_entropy_mean],
             "PPM Avg Length": [ppm_avg_length_mean],
             "LZMA Entropy": [lzma_entropy_mean],
@@ -408,5 +426,18 @@ if __name__ == "__main__":
             "LZ77 Entropy": [lz77_entropy_mean],
             "LZ77 Avg Length": [lz77_avg_length_mean]
         })
-        df.to_csv("results/"+regiao+"/mean.csv", index=False)
+        df.to_csv(f"results/{regiao}/mean.csv", index=False)
+        
+        # Save a comprehensive summary with all compression methods
+        df = pd.DataFrame({
+            "Text": txts,
+            "PPM Entropy": ppm_entropy,
+            "PPM Avg Length": ppm_avg_length,
+            "LZMA Entropy": lzma_entropy,
+            "LZMA Avg Length": lzma_avg_length,
+            "LZ77 Entropy": lz77_entropy,
+            "LZ77 Avg Length": lz77_avg_length
+        })
+        df.to_csv(f"results/{regiao}/all_compressors.csv", index=False)
+        
         print(f"Results saved to results/{regiao}/")

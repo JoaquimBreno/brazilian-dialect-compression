@@ -1,3 +1,2 @@
 # Torna o diretório models um pacote
-from models.context import Context
-from models.ppm_model import PPMModel 
+# Deixando vazio para evitar ciclos de importação 

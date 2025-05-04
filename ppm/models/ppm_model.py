@@ -1,9 +1,15 @@
 import string
 import math
 from typing import Dict, List
+import os
+import sys
 
-from models.context import Context
-from utils.encoder import codificar_ppm  # Importando a função
+# Garante que os módulos possam ser encontrados diretamente
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.dirname(os.path.dirname(current_dir)))
+
+from ppm.models.context import Context
+from ppm.utils.encoder import codificar_ppm  # Importando a função
 
 
 class PPMModel:

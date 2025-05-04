@@ -1,2 +1,2 @@
 # Torna o diretório processors um pacote
-from processors.ppm_processor import PPMProcessor 
+# Deixando vazio para evitar ciclos de importação 

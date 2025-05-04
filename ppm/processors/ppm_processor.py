@@ -1,6 +1,12 @@
 from typing import List, Any
+import os
+import sys
 
-from models.ppm_model import PPMModel
+# Garante que os módulos possam ser encontrados diretamente
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.dirname(os.path.dirname(current_dir)))
+
+from ppm.models.ppm_model import PPMModel
 
 class PPMProcessor:
     """Gerencia o processamento do texto usando o modelo PPM."""

@@ -1,7 +1,15 @@
 from typing import List, Any
 import json
-from utils.file_handler import FileHandler
-from processors.ppm_processor import PPMProcessor
+import os
+import sys
+
+# Garante que os módulos possam ser encontrados diretamente
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(current_dir)
+sys.path.append(os.path.dirname(current_dir))
+
+from ppm.utils.file_handler import FileHandler
+from ppm.processors.ppm_processor import PPMProcessor
 
 class PPMApp:
     """Aplicação principal que usa o modelo PPM."""
