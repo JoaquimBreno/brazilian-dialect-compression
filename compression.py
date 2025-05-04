@@ -351,7 +351,7 @@ if __name__ == "__main__":
         lz77_entropy = []
         lz77_avg_length = []
 
-        for i in range(1, 4):
+        for i in range(1, 45):
             filepath = "db/"+regiao+"/splits/train/train_batch_"+  str(i) + ".txt"
             results = run_compression_analysis(filepath, i)
             txts.append("train_batch_" + str(i) + ".txt")
