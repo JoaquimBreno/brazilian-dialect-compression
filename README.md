@@ -110,22 +110,81 @@ We apply different compression algorithms to analyze the linguistic characterist
 
 ## 🚀 Usage
 
-1. Execute the PPM processor on the training data:
+1. Run the regional dialect comparison using PPM algorithm:
 
-```
----------
+```python
+from compression_analysis import PPMCompressor
+from dialect_utils import load_regional_texts
+
+# Load regional text samples
+regional_texts = load_regional_texts(data_path="dataset/", regions=["Northeast", "North", "South", "Southeast"])
+
+# Initialize PPM compressor
+ppm_compressor = PPMCompressor(order=5)
+
+# Calculate compression ratios for each region
+region_metrics = {}
+for region, texts in regional_texts.items():
+    compressed_sizes = [ppm_compressor.compress(text) for text in texts]
+    entropy = ppm_compressor.calculate_entropy(texts)
+    region_metrics[region] = {
+        "compression_ratio": sum(compressed_sizes) / sum(len(t) for t in texts),
+        "entropy": entropy
+    }
+    
+print("Regional dialect metrics:", region_metrics)
 ```
 
-2. Compare with other compression algorithms:
+2. Generate distance matrix between regional dialects:
 
-```
-------------
+```python
+from distance_metrics import calculate_kl_divergence
+import numpy as np
+import pandas as pd
+
+# Calculate KL divergence between regions
+regions = ["Northeast", "North", "South", "Southeast"]
+n_regions = len(regions)
+distance_matrix = np.zeros((n_regions, n_regions))
+
+for i, region1 in enumerate(regions):
+    for j, region2 in enumerate(regions):
+        if i != j:
+            distance_matrix[i, j] = calculate_kl_divergence(
+                regional_texts[region1], 
+                regional_texts[region2], 
+                ppm_compressor
+            )
+
+# Create and save distance matrix
+df = pd.DataFrame(distance_matrix, index=regions, columns=regions)
+df.to_csv("results/distance_matrix.csv")
 ```
 
-3. Generate distance matrix and dendrogram:
+3. Visualize regional dialects with hierarchical clustering:
 
-```
------------------
+```python
+from dialect_visualization import plot_dendrogram, plot_heatmap
+from scipy.cluster.hierarchy import linkage
+
+# Generate linkage matrix for hierarchical clustering
+link_matrix = linkage(distance_matrix, method='ward')
+
+# Plot and save dendrogram
+plot_dendrogram(
+    link_matrix, 
+    labels=regions,
+    title="Brazilian Regional Dialect Clusters",
+    filename="results/dialect_dendrogram.png"
+)
+
+# Plot and save heatmap
+plot_heatmap(
+    distance_matrix,
+    labels=regions,
+    title="Regional Dialect Distance Matrix",
+    filename="results/dialect_heatmap.png"
+)
 ```
 
 ## 📈 Results
@@ -136,6 +195,30 @@ The results include:
 - Distance matrices between dialects
 - Dendrogram visualizations
 - Statistical analyses of linguistic characteristics
+
+<p align="center">
+  <img src="graficos/dendrograma_combinado.png" alt="Combined Model Dendrogram" width="500"/>
+  <br>
+  <em>Dendrogram showing hierarchical clustering of Brazilian regions based on combined compression models</em>
+</p>
+
+<p align="center">
+  <img src="graficos/heatmap_divergencia_kl.png" alt="KL Divergence Heatmap" width="500"/>
+  <br>
+  <em>Heatmap of Kullback-Leibler divergence between regional dialects</em>
+</p>
+
+<p align="center">
+  <img src="graficos/tabela_medias_regioes.png" alt="Regional Means Table" width="500"/>
+  <br>
+  <em>Comparison of entropy metrics across regions using different compression algorithms</em>
+</p>
+
+<p align="center">
+  <img src="graficos/boxplots_comparacao_regioes.png" alt="Regional Comparison Boxplots" width="500"/>
+  <br>
+  <em>Distribution of compression metrics across Brazilian regions</em>
+</p>
 
 ## 📄 License
 
